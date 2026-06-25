@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offer捕手 · 双阶段 AI Agent</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--primary:#2563eb;--primary-dark:#1d4ed8;--primary-light:#dbeafe;--accent:#f59e0b;--success:#10b981;--danger:#ef4444;--bg:#f1f5f9;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.08);--shadow-lg:0 10px 25px rgba(0,0,0,.08)}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+    .header{background:linear-gradient(135deg,var(--primary) 0%,#7c3aed 100%);color:#fff;padding:28px 24px;text-align:center;position:relative}
+    .header h1{font-size:1.6rem;font-weight:700}.header .sub{font-size:.9rem;opacity:.85;margin-top:4px}
+    .header .config-gear{position:absolute;top:16px;right:20px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:1.2rem;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
+    .header .config-gear:hover{background:rgba(255,255,255,.35)}
+    .container{max-width:860px;margin:0 auto;padding:20px}
+    .tabs{display:flex;gap:0;margin-bottom:24px;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+    .tab-btn{flex:1;padding:14px 16px;border:none;background:var(--card);color:var(--muted);font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+    .tab-btn.active{background:var(--primary);color:#fff}
+    .tab-btn:hover:not(.active){background:var(--primary-light);color:var(--primary)}
+    .panel{display:none}.panel.active{display:block}
+    .card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
+    .card h2{font-size:1.15rem;margin-bottom:12px;color:var(--primary);display:flex;align-items:center;gap:8px}
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;font-size:.88rem;font-weight:600;color:var(--text);margin-bottom:6px}
+    .form-group textarea,.form-group input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.93rem;font-family:inherit;resize:vertical;transition:border-color .2s;background:#fafbfc;line-height:1.6}
+    .form-group textarea:focus,.form-group input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
+    .form-group textarea{min-height:100px}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:11px 24px;border:none;border-radius:var(--radius);font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s}
+    .btn-primary{background:var(--primary);color:#fff}
+    .btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+    .btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--primary)}
+    .btn-outline:hover{background:var(--primary-light)}
+    .btn-sm{padding:7px 14px;font-size:.82rem;border-radius:8px}
+    .status{display:none;padding:10px 16px;border-radius:var(--radius);margin-bottom:16px;font-size:.88rem;font-weight:500}
+    .status.loading{display:block;background:var(--primary-light);color:var(--primary)}
+    .status.error{display:block;background:#fef2f2;color:var(--danger);border:1px solid #fecaca}
+    .status.success{display:block;background:#f0fdf4;color:var(--success);border:1px solid #bbf7d0}
+    .report-wrapper{display:none}.report-wrapper.active{display:block}
+    .report{background:var(--card);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow-lg);margin-top:16px;line-height:1.85;font-size:.95rem}
+    .report h1{font-size:1.5rem;color:var(--primary);margin-bottom:12px}
+    .report h2{font-size:1.2rem;color:var(--text);margin:24px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--primary-light)}
+    .report h3{font-size:1.05rem;color:var(--text);margin:16px 0 8px}
+    .report ul,.report ol{padding-left:20px;margin:8px 0}.report li{margin:4px 0}
+    .report code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.88em}
+    .report pre{background:#1e293b;color:#e2e8f0;padding:16px;border-radius:var(--radius);overflow-x:auto;font-size:.85rem;line-height:1.5;margin:12px 0}
+    .report blockquote{border-left:3px solid var(--primary);padding-left:16px;margin:12px 0;color:var(--muted)}
+    .report table{width:100%;border-collapse:collapse;margin:12px 0}
+    .report td,.report th{border:1px solid var(--border);padding:10px 12px;text-align:left;font-size:.88rem}
+    .report th{background:var(--primary-light);color:var(--primary);font-weight:700}
+    .report strong{color:var(--text)}
+    .typing-cursor::after{content:'▊';animation:blink 1s infinite;color:var(--primary)}
+    @keyframes blink{50%{opacity:0}}
+    .empty{text-align:center;padding:60px 20px;color:var(--muted)}
+    .empty .icon{font-size:2.5rem;margin-bottom:12px}
+    .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center}
+    .modal-overlay.show{display:flex}
+    .modal{background:var(--card);border-radius:var(--radius);padding:28px;max-width:500px;width:90%;box-shadow:var(--shadow-lg)}
+    .modal h3{margin-bottom:16px;font-size:1.1rem}
+    .modal .note{font-size:.82rem;color:var(--muted);margin-top:12px;padding:10px;background:#f8fafc;border-radius:8px}
+    @media(max-width:640px){.container{padding:12px}.header{padding:20px 16px}.header h1{font-size:1.3rem}.card{padding:16px}.report{padding:20px}}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎯 Offer捕手 · 双阶段 AI Agent</h1>
+  <div class="sub">阶段一：智能寻岗 &nbsp;|&nbsp; 阶段二：深度诊断与简历升维</div>
+  <button class="config-gear" onclick="toggleConfig()" title="配置">⚙️</button>
+</div>
+
+<div class="container">
+  <!-- ═══ 配置面板 ═══ -->
+  <div class="modal-overlay" id="configOverlay">
+    <div class="modal">
+      <h3>⚙️ API 配置</h3>
+      <div class="form-group">
+        <label>后端 API 地址</label>
+        <input id="cfgApiBase" type="text" placeholder="留空则直连 DeepSeek 或使用默认代理">
+      </div>
+      <div class="form-group">
+        <label>DeepSeek API Key（直连模式）</label>
+        <input id="cfgApiKey" type="password" placeholder="sk-...">
+      </div>
+      <div class="note">
+        💡 <strong>默认模式：</strong>通过后端代理（安全推荐）。<br>
+        💡 <strong>直连模式：</strong>清空API地址，填入Key，直接调DeepSeek（需浏览器支持CORS）。
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-primary" onclick="saveConfig()" style="flex:1">💾 保存</button>
+        <button class="btn btn-outline" onclick="toggleConfig()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Tab 切换 ═══ -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('discover')">🔍 阶段一：智能寻岗</button>
+    <button class="tab-btn" onclick="switchTab('assess')">🎯 阶段二：深度诊断</button>
+  </div>
+
+  <!-- ═══ 阶段一：智能寻岗 ═══ -->
+  <div id="panel-discover" class="panel active">
+    <div class="card">
+      <h2>🔍 告诉我你的背景和求职意向</h2>
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px">输入你的专业/背景与求职方向，AI 将为你推荐3个高匹配岗位。</p>
+      <div class="form-group">
+        <label>你的专业 / 背景</label>
+        <input id="discoverBg" type="text" placeholder="例如：计算机科学大三，熟悉Python和Java，有电商系统项目经验">
+      </div>
+      <div class="form-group">
+        <label>求职意向</label>
+        <input id="discoverIntent" type="text" placeholder="例如：后端开发工程师，Java方向，校招/实习">
+      </div>
+      <button class="btn btn-primary" id="discoverBtn" onclick="doDiscover()">🔍 开始寻岗</button>
+    </div>
+    <div class="status" id="discoverStatus"></div>
+    <div id="discoverResult"></div>
+  </div>
+
+  <!-- ═══ 阶段二：深度诊断 ═══ -->
+  <div id="panel-assess" class="panel">
+    <div class="card">
+      <h2>🎯 全维度匹配诊断</h2>
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px">粘贴你的简历文本和目标岗位 JD（可从寻岗结果中复制）。</p>
+      <div class="form-group">
+        <label>📄 你的简历文本</label>
+        <textarea id="resume" placeholder="粘贴你的简历全文..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>📋 目标岗位 JD</label>
+        <textarea id="jd" placeholder="粘贴目标岗位描述..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>🧠 团队角色偏好（选填）</label>
+        <input id="personality" type="text" placeholder="在团队中，你更喜欢冲锋陷阵的执行者，还是运筹帷幄的规划者？">
+      </div>
+      <button class="btn btn-primary" id="assessBtn" onclick="doAssess()">🚀 开始诊断</button>
+    </div>
+    <div class="status" id="assessStatus"></div>
+    <div class="report-wrapper" id="reportWrapper">
+      <div class="report" id="reportContent">
+        <div class="empty"><div class="icon">📋</div><div>等待诊断结果...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══ 配置管理 ═══
+const LS_KEY = 'offer_catcher_config';
+
+function getConfig() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; }
+}
+function setConfig(cfg) { localStorage.setItem(LS_KEY, JSON.stringify(cfg)); }
+
+// 预配置默认 API Key（首次访问自动保存，无需手动输入）
+const DEFAULT_API_KEY = 'sk-628d78a2403d47d3936b427322622957';
+
+(function initConfig() {
+  const cfg = getConfig();
+  let updated = false;
+  if (!cfg.apiKey && !cfg.apiBase) {
+    cfg.apiKey = DEFAULT_API_KEY;
+    cfg.apiBase = '';
+    updated = true;
+  }
+  if (updated) setConfig(cfg);
+  if (cfg.apiBase) document.getElementById('cfgApiBase').value = cfg.apiBase;
+  if (cfg.apiKey) document.getElementById('cfgApiKey').value = cfg.apiKey;
+})();
+
+function toggleConfig() {
+  document.getElementById('configOverlay').classList.toggle('show');
+}
+function saveConfig() {
+  setConfig({
+    apiBase: document.getElementById('cfgApiBase').value.trim(),
+    apiKey: document.getElementById('cfgApiKey').value.trim()
+  });
+  toggleConfig();
+  showStatus('assessStatus', 'success', '✅ 配置已保存');
+  setTimeout(() => {
+    const el = document.getElementById('assessStatus');
+    el.className = 'status'; el.textContent = '';
+  }, 2000);
+}
+
+// 获取 API 请求目标：优先用配置的代理地址，其次用同域 /api/，最后直连
+function getEndpoints() {
+  const cfg = getConfig();
+  const apiBase = cfg.apiBase || window.location.origin;
+  return {
+    discover: `${apiBase}/api/discover`,
+    assess: `${apiBase}/api/assess`,
+    directKey: cfg.apiKey || null,
+  };
+}
+
+// ═══ Tab 切换 ═══
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (tab==='discover'?i===0:i===1)));
+  document.getElementById('panel-discover').classList.toggle('active', tab==='discover');
+  document.getElementById('panel-assess').classList.toggle('active', tab==='assess');
+}
+
+// ═══ SSE 流式读取 ═══
+async function readSSEStream(resp, onContent, onStatus, onError) {
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  while(true){
+    const {done, value} = await reader.read();
+    if(done) break;
+    buf += decoder.decode(value, {stream:true});
+    const lines = buf.split('\n');
+    buf = lines.pop()||'';
+    for(const line of lines){
+      const t = line.trim();
+      if(!t.startsWith('data:')) continue;
+      const json = t.slice(5).trim();
+      if(!json||json==='[DONE]') continue;
+      try{
+        const dt = JSON.parse(json);
+        if(dt.type==='content'&&dt.content) onContent(dt.content);
+        else if(dt.type==='status'&&dt.content&&onStatus) onStatus(dt.content);
+        else if(dt.type==='error'&&dt.content&&onError) onError(dt.content);
+      }catch(e){ console.warn('SSE skip:',json.slice(0,60)); }
+    }
+  }
+}
+
+// ═══ 直连 DeepSeek（不使用代理时） ═══
+async function directFetch(messages, onContent) {
+  const { directKey } = getEndpoints();
+  if (!directKey) throw new Error('未配置 API Key，请点击右上角 ⚙️ 设置');
+  
+  const resp = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${directKey}`,
+    },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      messages,
+      stream: true,
+      temperature: 0.7,
+      max_tokens: 4096,
+    }),
+  });
+  
+    if (!resp.ok) {
+      const t = await resp.text().catch(()=>'Unknown');
+      if (resp.status === 402) throw new Error('DeepSeek 账户余额不足，请充值（platform.deepseek.com）');
+      throw new Error(`API 返回 ${resp.status}: ${t.slice(0,200)}`);
+    }
+  
+  // 直接解析 OpenAI 格式 SSE（不用后端包装）
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  while(true){
+    const {done, value} = await reader.read();
+    if(done) break;
+    buf += decoder.decode(value, {stream:true});
+    const lines = buf.split('\n');
+    buf = lines.pop()||'';
+    for(const line of lines){
+      const t = line.trim();
+      if(!t.startsWith('data:')) continue;
+      const json = t.slice(5).trim();
+      if(!json||json==='[DONE]') continue;
+      try{
+        const dt = JSON.parse(json);
+        const c = dt.choices?.[0]?.delta?.content||'';
+        if(c) onContent(c);
+      }catch{}
+    }
+  }
+}
+
+// ═══ 通过后端代理请求（SSE） ═══
+async function proxyFetch(endpoint, body, onContent, onStatus, onError) {
+  const resp = await fetch(endpoint, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(body),
+  });
+  if(!resp.ok){
+    const e = await resp.json().catch(()=>({error:`HTTP ${resp.status}`}));
+    throw new Error(e.error||e.detail||e.hint||`请求失败 (${resp.status})`);
+  }
+  await readSSEStream(resp, onContent, onStatus, onError);
+}
+
+// ═══ 判断使用直连还是代理 ═══
+async function smartFetch(endpoint, body, messages, onContent, onStatus, onError) {
+  const { directKey, discover } = getEndpoints();
+  
+  // 如果有后端代理地址（不等于当前 origin），优先用代理
+  const cfg = getConfig();
+  if (cfg.apiBase) {
+    return proxyFetch(endpoint, body, onContent, onStatus, onError);
+  }
+  
+  // 如果当前页面通过本地服务器（dev-server）打开，用 /api/ 代理
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return proxyFetch(endpoint, body, onContent, onStatus, onError);
+  }
+  
+  // 否则尝试直连 DeepSeek
+  if (directKey) {
+    try {
+      return directFetch(messages, onContent);
+    } catch(e) {
+      if (e.message.includes('Failed to fetch') || e.name === 'TypeError') {
+        throw new Error('浏览器 CORS 限制：请在右上角 ⚙️ 中填入后端代理地址，或使用本地版（node dev-server.js）');
+      }
+      throw e;
+    }
+  }
+
+  throw new Error('请点击右上角 ⚙️ 配置 API Key 或后端代理地址');
+}
+
+// ═══ 阶段一：智能寻岗 ═══
+async function doDiscover() {
+  const bg = document.getElementById('discoverBg').value.trim();
+  const intent = document.getElementById('discoverIntent').value.trim();
+  if(!bg||!intent){ showStatus('discoverStatus','error','请填写专业/背景和求职意向'); return; }
+
+  const resultEl = document.getElementById('discoverResult');
+  resultEl.innerHTML = '<div class="empty"><div class="icon">🔍</div><div id="discoverStreamText">正在分析...</div></div>';
+  const streamText = document.getElementById('discoverStreamText');
+  
+  showStatus('discoverStatus','loading','🤖 AI 正在为你筛选岗位...');
+  const btn = document.getElementById('discoverBtn');
+  btn.disabled=true; btn.textContent='分析中...';
+
+  let fullText=''; let hadError=false;
+
+  try {
+    const messages = [
+      { role:'system', content: DISCOVER_PROMPT },
+      { role:'user', content: `【专业/背景】${bg}\n【求职意向】${intent}\n请推荐3个高匹配岗位。` }
+    ];
+    const ep = getEndpoints();
+    await smartFetch(ep.discover, {background:bg, intent}, messages,
+      (c)=>{ fullText+=c; streamText.innerHTML=marked.parse(fullText); },
+      (s)=>{ showStatus('discoverStatus','loading',s); },
+      (e)=>{ hadError=true; showStatus('discoverStatus','error','❌ '+e); }
+    );
+    if(!hadError&&fullText){
+      showStatus('discoverStatus','success','✅ 寻岗完成');
+      resultEl.innerHTML+=`<div style="text-align:center;margin-top:16px"><p style="color:var(--muted);font-size:.88rem;margin-bottom:10px">📌 复制心仪岗位的详细JD，切换到<strong>"阶段二：深度诊断"</strong></p><button class="btn btn-outline btn-sm" onclick="switchTab('assess')">🎯 进入深度诊断</button></div>`;
+    }else if(!fullText){ streamText.innerHTML='<div class="empty"><div class="icon">😔</div><div>未找到匹配岗位</div></div>'; }
+  }catch(err){
+    showStatus('discoverStatus','error','❌ '+err.message);
+    resultEl.innerHTML=`<div class="empty"><div class="icon">😢</div><div>${escHtml(err.message)}<br><small style="color:var(--muted)">提示：请点击右上角 ⚙️ 检查配置</small></div></div>`;
+  }finally{ btn.disabled=false; btn.textContent='🔍 开始寻岗'; }
+}
+
+// ═══ 阶段二：深度诊断 ═══
+async function doAssess() {
+  const resume = document.getElementById('resume').value.trim();
+  const jd = document.getElementById('jd').value.trim();
+  const personality = document.getElementById('personality').value.trim();
+  if(!resume||!jd){ showStatus('assessStatus','error','请填写简历和岗位JD'); return; }
+
+  const reportEl = document.getElementById('reportContent');
+  const wrapper = document.getElementById('reportWrapper');
+  reportEl.classList.add('typing-cursor'); reportEl.innerHTML=''; wrapper.classList.add('active');
+
+  showStatus('assessStatus','loading','🤖 AI 正在深度分析...');
+  const btn = document.getElementById('assessBtn');
+  btn.disabled=true; btn.textContent='分析中...';
+
+  let fullText=''; let hadError=false;
+
+  try {
+    const userMsg = `【我的简历】\n${resume}\n\n【目标岗位JD】\n${jd}\n\n【团队角色偏好】\n${personality||'（未提供）'}\n\n请严格按照输出格式生成诊断报告。`;
+    const messages = [
+      { role:'system', content: ASSESS_PROMPT },
+      { role:'user', content: userMsg }
+    ];
+    const ep = getEndpoints();
+    await smartFetch(ep.assess, {resume, jd, personalityAnswer:personality}, messages,
+      (c)=>{ fullText+=c; reportEl.innerHTML=marked.parse(fullText); reportEl.scrollIntoView({behavior:'smooth',block:'end'}); },
+      null,
+      (e)=>{ hadError=true; showStatus('assessStatus','error','❌ '+e); }
+    );
+    reportEl.classList.remove('typing-cursor');
+    if(hadError){ if(!fullText) reportEl.innerHTML='<div class="empty"><div class="icon">😢</div><div>生成失败</div></div>'; }
+    else if(fullText){ showStatus('assessStatus','success','✅ 诊断完成'); }
+    else{ reportEl.innerHTML='<div class="empty"><div class="icon">🤔</div><div>AI 返回空内容，请重试</div></div>'; }
+  }catch(err){
+    reportEl.classList.remove('typing-cursor');
+    if(!reportEl.innerHTML.trim()) reportEl.innerHTML=`<div class="empty"><div class="icon">😢</div><div>${escHtml(err.message)}<br><small style="color:var(--muted)">提示：请点击右上角 ⚙️ 检查配置</small></div></div>`;
+    showStatus('assessStatus','error','❌ '+err.message);
+  }finally{ btn.disabled=false; btn.textContent='🚀 开始诊断'; }
+}
+
+// ═══ 工具 ═══
+function showStatus(id,type,msg){ const el=document.getElementById(id); el.className='status '+type; el.textContent=msg; }
+function escHtml(s){ const m={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}; return String(s).replace(/[&<>"']/g,c=>m[c]); }
+
+// ═══ System Prompts（压缩版，后端会展开） ═══
+const DISCOVER_PROMPT = `你是资深AI猎头。根据用户背景和意向，推荐3个真实存在的校招/实习岗位。
+
+输出格式：
+### 推荐岗位 1
+- 🏢 **公司 | 岗位**：[知名公司 | 具体岗位]
+- 💡 **核心门槛**：[学历、技能、经验要求]
+- 📍 **工作地点**：[城市]
+- 🔗 **搜索链接**：https://www.zhipin.com/web/geek/job?query=关键词
+
+（同样格式输出岗位2和3）
+
+约束：公司必须真实存在，岗位符合2025-2026校招市场，门槛要具体。`;
+
+const ASSESS_PROMPT = `你是资深AI猎头与简历诊断专家。进行全维度人岗匹配诊断。
+
+评分（总分100）：经历契合度30分 | 人格特质30分 | 潜力学习力20分 | 文化价值观20分
+
+输出格式：
+# 🎯 Offer捕手·全维度诊断报告
+## 📊 匹配度雷达图 (总分100)
+- **经历契合度**：XX/30 (简评)
+- **人格特质**：XX/30 (简评)
+- **潜力与学习力**：XX/20 (简评)
+- **文化价值观**：XX/20 (简评)
+## 🧠 核心差距 (Gap)
+- [指出JD强要求但简历缺失的致命点]
+## 🔧 简历升维话术
+- ❌ **原描述**：[摘录原句]
+- ✅ **升维话术**：[STAR法则重写，含专业术语和模拟量化数据]
+## 📌 面试避坑指南
+- ⚠️ [预判面试官质疑点及应对策略]
+
+约束：客观犀利，硬性技能缺失直接扣分，话术必须可直接复制替换。`;
+</script>
+</body>
+</html>

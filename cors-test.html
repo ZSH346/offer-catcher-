@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>CORS Test</title></head><body>
+<h3>测试 DeepSeek API CORS...</h3>
+<pre id="log"></pre>
+<script>
+const log = (msg) => { document.getElementById('log').textContent += msg + '\n'; };
+
+(async () => {
+  const key = 'sk-628d78a2403d47d3936b427322622957';
+  const url = 'https://api.deepseek.com/v1/chat/completions';
+  
+  log('发起请求...');
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: '回复一个词：你好' }],
+        stream: false,
+        max_tokens: 10,
+      }),
+    });
+    log(`✅ Status: ${resp.status}`);
+    const txt = await resp.text();
+    log(`响应: ${txt.slice(0, 200)}`);
+  } catch (err) {
+    log(`❌ 错误: ${err.message}`);
+    log(`类型: ${err.name}`);
+    if (err.message.includes('CORS') || err.name === 'TypeError') {
+      log('⚠️ DeepSeek 不支持浏览器直接调用，需要后端代理');
+    }
+  }
+})();
+</script></body></html>
