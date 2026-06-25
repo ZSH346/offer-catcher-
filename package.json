@@ -1,0 +1,13 @@
+{
+  "name": "offer-catcher-api",
+  "version": "1.0.0",
+  "description": "Offer捕手 AI Agent 后端 - 智能寻岗 + 深度诊断",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {}
+}
